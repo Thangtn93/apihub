@@ -167,9 +167,13 @@ export function PublicModelsPage() {
                       {model.price} <span className="text-[10px] opacity-70">cr</span>
                     </span>
                   </div>
-                  <div className="text-right flex flex-col items-end">
-                    <span className="text-[10px] text-[#6B7280] font-medium uppercase tracking-tighter">Phân loại</span>
-                    <span className="text-xs font-bold text-[#1F1F1F]">{model.category || 'Chat'}</span>
+                  <div className="flex items-center gap-2">
+                    <Link to={`/tokens/${model.id}`} className="px-3 py-1.5 bg-gray-100 text-[#1F1F1F] text-[10px] font-bold rounded-lg hover:bg-gray-200 transition-all">
+                      Chi tiết
+                    </Link>
+                    <button className="px-4 py-1.5 bg-[#D4AF37] text-[#1F1F1F] text-[10px] font-black rounded-lg hover:bg-[#B08D57] transition-all shadow-sm">
+                      Mua ngay
+                    </button>
                   </div>
                 </div>
               </Link>

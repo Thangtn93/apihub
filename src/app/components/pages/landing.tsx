@@ -90,12 +90,14 @@ export function LandingPage() {
                   <div className="p-5 flex flex-col flex-1">
                     <h3 className="font-bold text-lg text-[#1F1F1F] group-hover:text-[#D4AF37] transition line-clamp-2">{acc.name}</h3>
                     <p className="text-sm text-[#6B7280] mt-2 line-clamp-2 flex-1">{acc.description || `${acc.provider} Premium Account`}</p>
-                    <div className="mt-4 flex items-end justify-between">
-                      <div>
-                        {discount > 0 && <p className="text-xs text-[#6B7280] line-through">{acc.originalPrice.toLocaleString('vi-VN')}đ</p>}
-                        <p className="text-lg font-bold text-red-500">{acc.salePrice.toLocaleString('vi-VN')}đ</p>
+                    <div className="mt-4 flex items-center justify-between gap-2">
+                      <div className="flex-1">
+                        {discount > 0 && <p className="text-[10px] text-[#6B7280] line-through">{acc.originalPrice.toLocaleString('vi-VN')}đ</p>}
+                        <p className="text-lg font-bold text-red-500 leading-none">{acc.salePrice.toLocaleString('vi-VN')}đ</p>
                       </div>
-                      <div className="text-xs font-medium bg-[#FAF7F0] px-2 py-1 rounded text-[#6B7280]">{acc.provider}</div>
+                      <button className="px-3 py-1.5 bg-[#D4AF37] text-[#1F1F1F] text-[10px] font-black rounded-lg hover:bg-[#B08D57] transition-all whitespace-nowrap">
+                        Mua ngay
+                      </button>
                     </div>
                   </div>
                 </Link>
@@ -140,9 +142,14 @@ export function LandingPage() {
                 <p className="text-xs text-[#6B7280] line-clamp-2 flex-1 mb-4">
                   {model.description || `Mô hình AI từ ${model.provider} với Context Window ${model.contextWindow || 'tiêu chuẩn'}.`}
                 </p>
-                <div className="flex items-center justify-between pt-3 border-t border-[#E5E7EB]/50">
-                  <span className="text-xs font-medium text-[#6B7280]">{model.category}</span>
-                  <span className="text-sm font-bold text-[#D4AF37] bg-[#D4AF37]/10 px-2 py-1 rounded">{model.price} cr / req</span>
+                <div className="flex items-center justify-between pt-3 border-t border-[#E5E7EB]/50 gap-3">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-[#6B7280] font-medium">{model.category}</span>
+                    <span className="text-sm font-bold text-[#D4AF37]">{model.price} cr</span>
+                  </div>
+                  <button className="px-3 py-1.5 bg-[#D4AF37] text-[#1F1F1F] text-[10px] font-black rounded-lg hover:bg-[#B08D57] transition-all">
+                    Mua ngay
+                  </button>
                 </div>
               </Link>
             ))}

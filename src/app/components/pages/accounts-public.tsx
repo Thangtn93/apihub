@@ -164,21 +164,26 @@ export function PublicAccountsPage() {
                       {acc.description || `${acc.provider} Premium Account with full access.`}
                     </p>
                     
-                    <div className="mt-6 pt-4 border-t border-[#FAF7F0] flex items-end justify-between">
-                      <div>
+                    <div className="mt-6 pt-4 border-t border-[#FAF7F0] flex items-center justify-between gap-3">
+                      <div className="flex-1">
                         {discount > 0 && (
                           <p className="text-[10px] text-[#6B7280] line-through decoration-red-400">
                             {acc.originalPrice.toLocaleString('vi-VN')}đ
                           </p>
                         )}
-                        <p className="text-xl font-black text-red-500 tracking-tight">
+                        <p className="text-lg font-black text-red-500 tracking-tight">
                           {acc.salePrice.toLocaleString('vi-VN')}
-                          <span className="text-xs ml-1 font-bold italic">VND</span>
+                          <span className="text-xs ml-0.5 font-bold italic">đ</span>
                         </p>
                       </div>
-                      <button className="px-4 py-2 bg-[#1F1F1F] text-white text-xs font-bold rounded-lg group-hover:bg-[#D4AF37] group-hover:text-[#1F1F1F] transition-all">
-                        Chi tiết
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <Link to={`/marketplace/${acc.id}`} className="px-3 py-2 bg-gray-100 text-[#1F1F1F] text-[10px] font-bold rounded-lg hover:bg-gray-200 transition-all">
+                          Chi tiết
+                        </Link>
+                        <button className="px-4 py-2 bg-[#D4AF37] text-[#1F1F1F] text-xs font-black rounded-lg hover:bg-[#B08D57] transition-all shadow-sm">
+                          Mua ngay
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </Link>
