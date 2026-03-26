@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useAuth, api } from "../../auth-context";
-import { Box, Plus, Trash2, Edit2, Save, X, RefreshCw, Download } from "lucide-react";
+import { Box, Plus, Trash2, Edit2, Save, X, RefreshCw, Key, Eye, EyeOff, CheckCircle, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 const emptyModel = { name: "", provider: "", category: "Chat", description: "", price: 0, inputPrice: 0, outputPrice: 0, contextWindow: "", status: "active" };
@@ -17,13 +17,21 @@ export function AdminModelsPage() {
   const [catFilter, setCatFilter] = useState("All");
   const [routerInfo, setRouterInfo] = useState<any>(null);
 
+  // Router Key modal state
+  const [showKeyModal, setShowKeyModal] = useState(false);
+  const [routerKey, setRouterKey] = useState("");
+  const [showKey, setShowKey] = useState(false);
+  const [savingKey, setSavingKey] = useState(false);
+
   const load = () => api().get("/models").then(d => Array.isArray(d) && setModels(d));
-  useEffect(() => {
-    load();
-    // Load router config for debug
+  const loadRouterConfig = () => {
     if (accessToken) {
       api(accessToken).get("/admin/router-config").then(d => !d.error && setRouterInfo(d));
     }
+  };
+  useEffect(() => {
+    load();
+    loadRouterConfig();
   }, [accessToken]);
 
   const add = async () => {
@@ -49,16 +57,56 @@ export function AdminModelsPage() {
     load();
   };
 
+  const saveRouterKey = async () => {
+    if (!routerKey.trim() || routerKey.trim().length < 8) {
+      toast.error("API key phải có ít nhất 8 ký tự");
+      return;
+    }
+    setSavingKey(true);
+    try {
+      const res = await api(accessToken).post("/admin/set-router-key", { key: routerKey.trim() });
+      if (res.error) {
+        toast.error(`Lỗi: ${res.error}`);
+      } else {
+        toast.success(`✅ Đã lưu Router API Key (${res.preview})`);
+        setShowKeyModal(false);
+        setRouterKey("");
+        loadRouterConfig();
+      }
+    } catch (e: any) {
+      toast.error(`Lỗi: ${e.message}`);
+    } finally {
+      setSavingKey(false);
+    }
+  };
+
+  const deleteRouterKey = async () => {
+    if (!confirm("Xóa Router API Key?")) return;
+    const res = await api(accessToken).delete("/admin/set-router-key");
+    if (res.error) {
+      toast.error(`Lỗi: ${res.error}`);
+    } else {
+      toast.success("Đã xóa Router API Key");
+      loadRouterConfig();
+    }
+  };
+
   const syncModels = async () => {
+    if (!routerInfo?.ROUTER_API_KEY_SET) {
+      setShowKeyModal(true);
+      toast.info("Vui lòng nhập Router API Key trước khi sync");
+      return;
+    }
     setSyncing(true);
     try {
       const res = await api(accessToken).post("/sync-models");
-      console.log("Sync response:", JSON.stringify(res));
       if (res.error) {
-        toast.error(`Sync lỗi: ${res.error}${res.url ? ` (URL: ${res.url})` : ""}`);
+        toast.error(`Sync lỗi: ${res.error}`);
+        if (res.error.includes("ROUTER_API_KEY")) setShowKeyModal(true);
       } else {
-        toast.success(`Sync thành công! ${res.synced}/${res.total} models từ 9Router`);
+        toast.success(`✅ Sync thành công! ${res.synced}/${res.total} models từ 9Router`);
         load();
+        loadRouterConfig();
       }
     } catch (e: any) {
       toast.error(`Sync lỗi: ${e.message}`);
@@ -120,7 +168,15 @@ export function AdminModelsPage() {
           <h1 className="text-2xl font-bold text-[#1F1F1F]">Quản lý Models</h1>
           <p className="text-[#6B7280]">{models.length} models ({filtered.length} hiển thị)</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <button onClick={() => setShowKeyModal(true)}
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-[#1F1F1F] text-white rounded-lg font-semibold hover:bg-[#333] transition text-sm">
+            <Key className="w-4 h-4" />
+            {routerInfo?.ROUTER_API_KEY_SET
+              ? <span className="flex items-center gap-1"><CheckCircle className="w-3 h-3 text-green-400" /> Router Key</span>
+              : <span className="flex items-center gap-1"><AlertCircle className="w-3 h-3 text-yellow-400" /> Set Router Key</span>
+            }
+          </button>
           <button onClick={syncModels} disabled={syncing}
             className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-[#8B5A2B] text-white rounded-lg font-semibold hover:bg-[#6d4522] transition text-sm disabled:opacity-50">
             <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
@@ -130,25 +186,16 @@ export function AdminModelsPage() {
               if (!confirm(`Xóa toàn bộ ${models.length} models?`)) return;
               setClearing(true);
               try {
-                console.log("Calling clear-models, token:", accessToken ? "SET" : "NULL");
                 const res = await api(accessToken).post("/admin/clear-models");
-                console.log("clear-models response:", JSON.stringify(res));
-                if (res.error) {
-                  toast.error(`Lỗi: ${res.error}`);
-                } else {
-                  toast.success(`Đã xóa ${res.deleted || 0} models`);
-                  load();
-                }
+                if (res.error) toast.error(`Lỗi: ${res.error}`);
+                else { toast.success(`Đã xóa ${res.deleted || 0} models`); load(); }
               } catch (e: any) {
-                console.error("clear-models exception:", e);
                 toast.error(`Lỗi: ${e.message}`);
-              } finally {
-                setClearing(false);
-              }
+              } finally { setClearing(false); }
             }}
             disabled={clearing}
             className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition text-sm disabled:opacity-50">
-            <Trash2 className="w-4 h-4" /> {clearing ? "Đang xóa..." : "Xóa tất cả Models"}
+            <Trash2 className="w-4 h-4" /> {clearing ? "Đang xóa..." : "Xóa tất cả"}
           </button>
           <button onClick={() => { setShowAdd(!showAdd); setForm({ ...emptyModel }); }}
             className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-[#D4AF37] text-[#1F1F1F] rounded-lg font-semibold hover:bg-[#B08D57] transition text-sm">
@@ -157,14 +204,74 @@ export function AdminModelsPage() {
         </div>
       </div>
 
+      {/* Router API Key Modal */}
+      {showKeyModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Key className="w-5 h-5 text-[#D4AF37]" />
+                <h3 className="font-bold text-[#1F1F1F] text-lg">Cài đặt Router API Key</h3>
+              </div>
+              <button onClick={() => { setShowKeyModal(false); setRouterKey(""); }} className="text-[#6B7280] hover:text-[#1F1F1F]">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Current status */}
+            <div className={`rounded-xl p-3 text-sm flex items-center gap-2 ${routerInfo?.ROUTER_API_KEY_SET ? "bg-green-50 text-green-700 border border-green-200" : "bg-yellow-50 text-yellow-700 border border-yellow-200"}`}>
+              {routerInfo?.ROUTER_API_KEY_SET
+                ? <><CheckCircle className="w-4 h-4 shrink-0" /> Key đang dùng: <code className="font-mono bg-white px-1.5 rounded">{routerInfo.ROUTER_API_KEY_PREVIEW}</code> ({routerInfo.ROUTER_API_KEY_SOURCE})</>
+                : <><AlertCircle className="w-4 h-4 shrink-0" /> Chưa cài đặt Router API Key — cần thiết để Sync Models và gọi AI</>
+              }
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-[#1F1F1F] block mb-2">
+                API Key từ <span className="text-[#D4AF37]">thang.apiaihub.shop</span>
+              </label>
+              <div className="relative">
+                <input
+                  type={showKey ? "text" : "password"}
+                  value={routerKey}
+                  onChange={e => setRouterKey(e.target.value)}
+                  placeholder="Nhập API key..."
+                  className="w-full px-4 py-3 pr-10 border border-[#E5E7EB] rounded-xl text-sm bg-[#FAF7F0] focus:ring-2 focus:ring-[#D4AF37] outline-none font-mono"
+                />
+                <button onClick={() => setShowKey(!showKey)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-[#1F1F1F]">
+                  {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={saveRouterKey}
+                disabled={savingKey || !routerKey.trim()}
+                className="flex-1 py-2.5 bg-[#D4AF37] text-[#1F1F1F] rounded-xl font-semibold text-sm hover:bg-[#B08D57] transition disabled:opacity-50"
+              >
+                {savingKey ? "Đang lưu..." : "✅ Lưu & Kích hoạt"}
+              </button>
+              {routerInfo?.ROUTER_API_KEY_SET && routerInfo.ROUTER_API_KEY_SOURCE === "kv_store" && (
+                <button onClick={deleteRouterKey} className="px-4 py-2.5 border border-red-200 text-red-500 rounded-xl text-sm hover:bg-red-50 transition">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Info box */}
       <div className="bg-[#FAF7F0] border border-[#D4AF37]/30 rounded-xl p-4 text-sm text-[#8B5A2B]">
         <p className="font-semibold mb-1">Kiến trúc Backend Proxy</p>
-        <p>Models được sync từ 9Router API. User sử dụng API key <code className="bg-white px-1.5 py-0.5 rounded text-xs font-mono">mk_*</code> riêng để gọi API qua server proxy.</p>
+        <p>Models được sync từ 9Router API. User sử dụng API key <code className="bg-white px-1.5 py-0.5 rounded text-xs font-mono">mk_*</code> riêng để gọi AI qua server proxy.</p>
         {routerInfo && (
           <div className="mt-2 p-2 bg-white rounded-lg border border-[#E5E7EB] text-xs font-mono">
             <p>API Base: <span className="text-[#D4AF37]">{routerInfo.ROUTER_API_BASE}</span></p>
-            <p>API Key: <span className={routerInfo.ROUTER_API_KEY_SET ? "text-green-600" : "text-red-500"}>{routerInfo.ROUTER_API_KEY_SET ? `✓ Set (${routerInfo.ROUTER_API_KEY_PREVIEW})` : "✗ NOT SET"}</span></p>
+            <p>API Key: <span className={routerInfo.ROUTER_API_KEY_SET ? "text-green-600" : "text-red-500"}>
+              {routerInfo.ROUTER_API_KEY_SET ? `✓ Set (${routerInfo.ROUTER_API_KEY_PREVIEW}) [${routerInfo.ROUTER_API_KEY_SOURCE}]` : "✗ NOT SET — Nhấn \"Set Router Key\" để cài"}
+            </span></p>
             <p>Fetch URL: <span className="text-[#6B7280]">{routerInfo.ROUTER_API_BASE}/v1/models</span></p>
           </div>
         )}
@@ -242,7 +349,9 @@ export function AdminModelsPage() {
                 </React.Fragment>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={7} className="px-4 py-8 text-center text-[#6B7280]">Không có model nào. Nhấn "Sync từ 9Router" để lấy danh sách.</td></tr>
+                <tr><td colSpan={7} className="px-4 py-8 text-center text-[#6B7280]">
+                  Không có model nào. {routerInfo?.ROUTER_API_KEY_SET ? 'Nhấn "Sync từ 9Router" để lấy danh sách.' : 'Nhấn "Set Router Key" để cài đặt API key trước.'}
+                </td></tr>
               )}
             </tbody>
           </table>

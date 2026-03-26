@@ -26,7 +26,14 @@ app.use(
 
 // 9Router config
 const ROUTER_API_BASE = Deno.env.get("ROUTER_API_BASE") || "https://thang.apiaihub.shop";
-const ROUTER_API_KEY = Deno.env.get("ROUTER_API_KEY") || "";
+
+// Lấy ROUTER_API_KEY từ env var hoặc KV store (ưu tiên env var)
+async function getRouterApiKey(): Promise<string> {
+  const envKey = Deno.env.get("ROUTER_API_KEY");
+  if (envKey) return envKey;
+  const kvKey = await kv.get("config:router_api_key");
+  return kvKey ? String(kvKey) : "";
+}
 
 // Helper to get user from token
 async function getUserFromToken(authHeader: string | undefined) {
@@ -408,16 +415,41 @@ app.post(`${PREFIX}/admin/test-supabase-query`, adminMiddleware, async (c) => {
 });
 
 app.get(`${PREFIX}/admin/router-config`, adminMiddleware, async (c) => {
+  const key = await getRouterApiKey();
   return c.json({
     ROUTER_API_BASE,
-    ROUTER_API_KEY_SET: !!ROUTER_API_KEY,
-    ROUTER_API_KEY_LENGTH: ROUTER_API_KEY?.length || 0,
-    ROUTER_API_KEY_PREVIEW: ROUTER_API_KEY ? `${ROUTER_API_KEY.substring(0, 6)}...${ROUTER_API_KEY.substring(ROUTER_API_KEY.length - 4)}` : "NOT SET",
+    ROUTER_API_KEY_SET: !!key,
+    ROUTER_API_KEY_LENGTH: key?.length || 0,
+    ROUTER_API_KEY_PREVIEW: key ? `${key.substring(0, 6)}...${key.substring(key.length - 4)}` : "NOT SET",
+    ROUTER_API_KEY_SOURCE: Deno.env.get("ROUTER_API_KEY") ? "env" : (key ? "kv_store" : "not_set"),
   });
+});
+
+app.post(`${PREFIX}/admin/set-router-key`, adminMiddleware, async (c) => {
+  try {
+    const { key } = await c.req.json();
+    if (!key || typeof key !== "string" || key.trim().length < 8) {
+      return c.json({ error: "API key không hợp lệ (tối thiểu 8 ký tự)" }, 400);
+    }
+    await kv.set("config:router_api_key", key.trim());
+    const preview = `${key.substring(0, 6)}...${key.substring(key.length - 4)}`;
+    return c.json({ success: true, preview });
+  } catch (e: any) {
+    return c.json({ error: e.message }, 500);
+  }
+});
+
+app.delete(`${PREFIX}/admin/set-router-key`, adminMiddleware, async (c) => {
+  await kv.del("config:router_api_key");
+  return c.json({ success: true });
 });
 
 app.post(`${PREFIX}/sync-models`, adminMiddleware, async (c) => {
   try {
+    const ROUTER_API_KEY = await getRouterApiKey();
+    if (!ROUTER_API_KEY) {
+      return c.json({ error: "ROUTER_API_KEY chưa được cấu hình. Vào Admin > Models > Cài đặt Router Key để thêm." }, 400);
+    }
     const fetchUrl = `${ROUTER_API_BASE}/v1/models`;
     const res = await fetch(fetchUrl, {
       headers: { "Authorization": `Bearer ${ROUTER_API_KEY}` },
@@ -524,10 +556,11 @@ app.post(`${PREFIX}/v1/chat/completions`, async (c) => {
     const forwardBody = { ...body, model: routerModelId };
     const isStream = body.stream === true;
 
+    const routerKey = await getRouterApiKey();
     const routerRes = await fetch(`${ROUTER_API_BASE}/v1/chat/completions`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${ROUTER_API_KEY}`,
+        "Authorization": `Bearer ${routerKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(forwardBody),
@@ -589,10 +622,11 @@ app.post(`${PREFIX}/v1/:endpoint`, async (c) => {
 
     const body = await c.req.json();
 
+    const routerKey2 = await getRouterApiKey();
     const routerRes = await fetch(`${ROUTER_API_BASE}/v1/${endpoint}`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${ROUTER_API_KEY}`,
+        "Authorization": `Bearer ${routerKey2}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
