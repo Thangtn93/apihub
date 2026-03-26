@@ -1,61 +1,108 @@
-**Add your own guidelines here**
-<!--
+# Guidelines — AI Market Marketplace
 
-System Guidelines
+## 🏗️ Kiến trúc dự án
 
-Use this file to provide the AI with rules and guidelines you want it to follow.
-This template outlines a few examples of things you can add. You can add your own sections and format it to suit your needs
+- **Frontend**: React 18 + Vite + Tailwind CSS v4, chạy tại `http://localhost:5173/`
+- **Backend**: Supabase Edge Function (Deno + Hono), đã deploy trên Supabase Cloud
+- **Database**: Supabase PostgreSQL (KV Store — bảng `kv_store_67c97e37`)
+- **AI Proxy**: 9Router tại `https://thang.apiaihub.shop/v1`
 
-TIP: More context isn't always better. It can confuse the LLM. Try and add the most important rules you need
+## 🔑 Thông tin Supabase Project
 
-# General guidelines
+| Thông tin | Giá trị |
+|-----------|---------|
+| Project ID | `xubuquskwfkseafjjxjy` |
+| Project URL | `https://xubuquskwfkseafjjxjy.supabase.co` |
+| Anon Key | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1YnVxdXNrd2Zrc2VhZmpqeGp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMjIyNDcsImV4cCI6MjA4OTU5ODI0N30.V-oiHsuV8sWoeU8x_tof5EZ5ey9G4-Bu8yClBiUNA-U` |
+| Edge Function Name | `make-server-67c97e37` |
+| API Base URL | `https://xubuquskwfkseafjjxjy.supabase.co/functions/v1/make-server-67c97e37` |
+| Dashboard Functions | https://supabase.com/dashboard/project/xubuquskwfkseafjjxjy/functions |
+| Dashboard DB | https://supabase.com/dashboard/project/xubuquskwfkseafjjxjy/database/tables |
 
-Any general rules you want the AI to follow.
-For example:
+## 🚀 Cách deploy Edge Function
 
-* Only use absolute positioning when necessary. Opt for responsive and well structured layouts that use flexbox and grid by default
-* Refactor code as you go to keep code clean
-* Keep file sizes small and put helper functions and components in their own files.
+```bash
+# 1. Cài Supabase CLI (nếu chưa có)
+brew install supabase/tap/supabase
 
---------------
+# 2. Login (dùng token của chủ project)
+supabase login --token <ACCESS_TOKEN>
 
-# Design system guidelines
-Rules for how the AI should make generations look like your company's design system
+# 3. Link project
+supabase link --project-ref xubuquskwfkseafjjxjy
 
-Additionally, if you select a design system to use in the prompt box, you can reference
-your design system's components, tokens, variables and components.
-For example:
+# 4. Copy source vào đúng folder CLI yêu cầu
+mkdir -p supabase/functions/make-server-67c97e37
+cp supabase/functions/server/index.tsx supabase/functions/make-server-67c97e37/index.ts
+cp supabase/functions/server/kv_store.tsx supabase/functions/make-server-67c97e37/kv_store.tsx
 
-* Use a base font-size of 14px
-* Date formats should always be in the format “Jun 10”
-* The bottom toolbar should only ever have a maximum of 4 items
-* Never use the floating action button with the bottom toolbar
-* Chips should always come in sets of 3 or more
-* Don't use a dropdown if there are 2 or fewer options
+# 5. Deploy
+supabase functions deploy make-server-67c97e37 --no-verify-jwt
+```
 
-You can also create sub sections and add more specific details
-For example:
+> **Lưu ý quan trọng:** Supabase CLI yêu cầu folder `supabase/functions/<function-name>/index.ts` — tên folder phải khớp với tên function. Source thực tế nằm ở `supabase/functions/server/`, cần copy sang trước khi deploy.
 
+## 🌱 Khởi tạo tài khoản test
 
-## Button
-The Button component is a fundamental interactive element in our design system, designed to trigger actions or navigate
-users through the application. It provides visual feedback and clear affordances to enhance user experience.
+```bash
+curl -X POST "https://xubuquskwfkseafjjxjy.supabase.co/functions/v1/make-server-67c97e37/dev/reset-users" \
+  -H "Authorization: Bearer <ANON_KEY>"
+```
 
-### Usage
-Buttons should be used for important actions that users need to take, such as form submissions, confirming choices,
-or initiating processes. They communicate interactivity and should have clear, action-oriented labels.
+Tạo lại 3 tài khoản:
+| Email | Password | Role | Credits |
+|-------|----------|------|---------|
+| admin@example.com | password123 | admin | 99,999 |
+| user1@example.com | password123 | user | 100 |
+| user2@example.com | password123 | user | 50 |
 
-### Variants
-* Primary Button
-  * Purpose : Used for the main action in a section or page
-  * Visual Style : Bold, filled with the primary brand color
-  * Usage : One primary button per section to guide users toward the most important action
-* Secondary Button
-  * Purpose : Used for alternative or supporting actions
-  * Visual Style : Outlined with the primary color, transparent background
-  * Usage : Can appear alongside a primary button for less important actions
-* Tertiary Button
-  * Purpose : Used for the least important actions
-  * Visual Style : Text-only with no border, using primary color
-  * Usage : For actions that should be available but not emphasized
--->
+## 🖥️ Cách chạy Frontend local
+
+```bash
+npm install
+npm run dev
+# → http://localhost:5173/
+```
+
+## 📁 Cấu trúc source chính
+
+```
+src/app/
+  App.tsx                  # Root: AuthProvider + RouterProvider
+  routes.tsx               # React Router routes
+  components/
+    auth-context.tsx       # Auth state + signIn/signOut
+    layout.tsx             # Sidebar + Header + Outlet (route guard)
+    pages/                 # User pages
+    pages/admin/           # Admin pages
+    ui/                    # Shadcn/ui components
+
+supabase/functions/server/
+  index.tsx                # Hono app — tất cả API endpoints
+  kv_store.tsx             # KV Store interface (PostgreSQL-backed)
+
+utils/supabase/info.tsx    # projectId + publicAnonKey
+```
+
+## 🎨 Design System
+
+| Token | Giá trị | Vai trò |
+|-------|---------|---------|
+| `#D4AF37` | Vàng kim | Màu chính, accent, active |
+| `#1F1F1F` | Đen/nâu tối | Background sidebar, heading |
+| `#8B5A2B` | Nâu đất | Accent phụ |
+| `#FAF7F0` | Trắng ngà | Background chính |
+
+## ⚙️ Biến môi trường Edge Function
+
+Không cần cấu hình thủ công — Supabase tự inject khi chạy trên cloud:
+- `SUPABASE_URL` — URL của project
+- `SUPABASE_SERVICE_ROLE_KEY` — Service role key (full quyền DB)
+- `ROUTER_API_BASE` — Base URL của 9Router (default: `https://thang.apiaihub.shop`)
+- `ROUTER_API_KEY` — API key để gọi 9Router (set qua Supabase Dashboard → Settings → Edge Functions → Secrets)
+
+## 🔗 GitHub Repository
+
+```
+https://github.com/Thangtn93/apihub.git
+```
