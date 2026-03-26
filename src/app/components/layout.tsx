@@ -22,7 +22,8 @@ const adminNav = [
   { to: "/admin", label: "Admin Dashboard", icon: Shield },
   { to: "/admin/users", label: "Users", icon: Users },
   { to: "/admin/providers", label: "Providers", icon: Server },
-  { to: "/admin/models", label: "Models", icon: Box },
+  { to: "/admin/accounts", label: "Tài khoản (Marketplace)", icon: Store },
+  { to: "/admin/models", label: "Models (API Token)", icon: Box },
   { to: "/admin/purchases", label: "Purchases", icon: Receipt },
   { to: "/admin/topups", label: "Top-ups", icon: ArrowUpCircle },
   { to: "/admin/token-logs", label: "Token Logs", icon: ScrollText },
@@ -36,7 +37,6 @@ export function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showAdmin, setShowAdmin] = useState(false);
   const isAdmin = profile?.role === "admin";
   const isAdminRoute = location.pathname.startsWith("/admin");
 
@@ -90,18 +90,10 @@ export function Layout() {
         <p className="px-3 py-1 text-xs text-[#FAF7F0]/40 uppercase tracking-wider">Menu</p>
         {userNav.map(item => navLink(item, () => setSidebarOpen(false)))}
         {isAdmin && (
-          <>
-            <button onClick={() => setShowAdmin(!showAdmin)} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#D4AF37] hover:bg-white/10 transition mt-2">
-              <Shield className="w-4 h-4" />
-              Admin Panel
-              <ChevronDown className={`w-4 h-4 ml-auto transition ${showAdmin ? "rotate-180" : ""}`} />
-            </button>
-            {showAdmin && (
-              <div className="ml-2 space-y-1">
-                {adminNav.map(item => navLink(item, () => setSidebarOpen(false)))}
-              </div>
-            )}
-          </>
+          <div className="mt-4 pt-4 border-t border-white/10 space-y-1">
+            <p className="px-3 py-1 text-xs text-[#FAF7F0]/40 uppercase tracking-wider mb-2">Admin Panel</p>
+            {adminNav.map(item => navLink(item, () => setSidebarOpen(false)))}
+          </div>
         )}
       </nav>
       <div className="p-3 border-t border-white/10">

@@ -46,7 +46,7 @@ export function AdminLoginPage() {
     if (!confirm("Hành động này sẽ XÓA TOÀN BỘ user hiện tại và tạo lại 1 Admin + 2 Users. Tiếp tục?")) return;
     setResetting(true);
     try {
-      const res = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-67c97e37/dev/reset-users`, {
+      const res = await fetch(`https://${projectId}.supabase.co/functions/v1/server/dev/reset-users`, {
         method: "POST",
         headers: { "Authorization": `Bearer ${publicAnonKey}` }
       });

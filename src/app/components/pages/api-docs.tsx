@@ -3,7 +3,7 @@ import { FileText, Copy, Check, Shield, Key, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { projectId } from "/utils/supabase/info";
 
-const API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-67c97e37`;
+const API_BASE = `https://${projectId}.supabase.co/functions/v1/server`;
 
 const pythonCode = `import requests
 

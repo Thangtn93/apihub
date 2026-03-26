@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { projectId, publicAnonKey } from "/utils/supabase/info";
 
 const supabaseUrl = `https://${projectId}.supabase.co`;
-const API_BASE = `${supabaseUrl}/functions/v1/make-server-67c97e37`;
+const API_BASE = `${supabaseUrl}/functions/v1/server`;
 
 export const supabase = createClient(supabaseUrl, publicAnonKey);
 

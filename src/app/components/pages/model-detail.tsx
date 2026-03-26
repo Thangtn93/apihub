@@ -5,7 +5,7 @@ import { ArrowLeft, ShoppingCart, Star, Cpu, Zap, Check, Send, Loader2, Copy, Te
 import { toast } from "sonner";
 import { projectId } from "/utils/supabase/info";
 
-const API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-67c97e37`;
+const API_BASE = `https://${projectId}.supabase.co/functions/v1/server`;
 
 export function ModelDetailPage() {
   const { id } = useParams();

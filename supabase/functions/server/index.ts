@@ -2,10 +2,10 @@ import { Hono } from "npm:hono";
 import { cors } from "npm:hono/cors";
 import { logger } from "npm:hono/logger";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import * as kv from "./kv_store.tsx";
+import * as kv from "./kv_store.ts";
 
 const app = new Hono();
-const PREFIX = "/make-server-67c97e37";
+const PREFIX = "/server";
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -384,6 +384,60 @@ app.post(`${PREFIX}/admin/clear-models`, adminMiddleware, async (c) => {
     return c.json({ success: true, deleted: keys.length });
   } catch (e: any) {
     return c.json({ error: `Exception: ${e.message}` }, 500);
+  }
+});
+
+// --- ACCOUNTS (Marketplace) ---
+app.get(`${PREFIX}/accounts`, async (c) => {
+  const records = await kv.getByPrefix("account:");
+  return c.json(records.map((r: string) => JSON.parse(r)));
+});
+
+app.post(`${PREFIX}/accounts`, adminMiddleware, async (c) => {
+  try {
+    const body = await c.req.json();
+    const id = body.id || `acc_${crypto.randomUUID()}`;
+    const now = new Date().toISOString();
+    const account = { ...body, id, createdAt: body.createdAt || now, updatedAt: now };
+    await kv.set(`account:${id}`, JSON.stringify(account));
+    return c.json(account);
+  } catch (e: any) {
+    return c.json({ error: e.message }, 500);
+  }
+});
+
+app.put(`${PREFIX}/accounts/:id`, adminMiddleware, async (c) => {
+  try {
+    const id = c.req.param("id");
+    const body = await c.req.json();
+    const existing = await kv.get(`account:${id}`);
+    if (!existing) return c.json({ error: "Not found" }, 404);
+    
+    const account = { ...JSON.parse(String(existing)), ...body, id, updatedAt: new Date().toISOString() };
+    await kv.set(`account:${id}`, JSON.stringify(account));
+    return c.json(account);
+  } catch (e: any) {
+    return c.json({ error: e.message }, 500);
+  }
+});
+
+app.post(`${PREFIX}/accounts/delete`, adminMiddleware, async (c) => {
+  try {
+    const { id } = await c.req.json();
+    await kv.del(`account:${id}`);
+    return c.json({ success: true });
+  } catch (e: any) {
+    return c.json({ error: e.message }, 500);
+  }
+});
+
+app.delete(`${PREFIX}/accounts/:id`, adminMiddleware, async (c) => {
+  try {
+    const id = c.req.param("id");
+    await kv.del(`account:${id}`);
+    return c.json({ success: true });
+  } catch (e: any) {
+    return c.json({ error: e.message }, 500);
   }
 });
 
