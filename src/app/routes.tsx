@@ -26,6 +26,8 @@ import { AdminTestSupabasePage } from "./components/pages/admin/admin-test-supab
 import { AdminUnitTestPage } from "./components/pages/admin/admin-unit-test";
 import { PublicAccountsPage } from "./components/pages/accounts-public";
 import { PublicModelsPage } from "./components/pages/models-public";
+import { CheckoutPage } from "./components/pages/checkout";
+import { AdminOrdersPage } from "./components/pages/admin/admin-orders";
 
 export const router = createBrowserRouter([
   {
@@ -40,12 +42,14 @@ export const router = createBrowserRouter([
       { path: "forgot-password", Component: ForgotPasswordPage },
       { path: "marketplace", Component: PublicAccountsPage },
       { path: "models", Component: PublicModelsPage },
+      { path: "marketplace/:id", Component: ModelDetailPage },
+      { path: "models/:id", Component: ModelDetailPage },
+      { path: "checkout/:type/:id", Component: CheckoutPage },
       {
         path: "",
         Component: Layout,
         children: [
           { path: "dashboard", Component: DashboardPage },
-          { path: "marketplace/:id", Component: ModelDetailPage },
           { path: "purchased", Component: PurchasedPage },
           { path: "api-docs", Component: ApiDocsPage },
           { path: "tokens", Component: TokensPage },
@@ -63,6 +67,7 @@ export const router = createBrowserRouter([
           { path: "admin/api-docs", Component: AdminApiDocsPage },
           { path: "admin/test-supabase", Component: AdminTestSupabasePage },
           { path: "admin/unit-test", Component: AdminUnitTestPage },
+          { path: "admin/orders", Component: AdminOrdersPage },
         ],
       },
       { path: "*", element: <Navigate to="/dashboard" replace /> },

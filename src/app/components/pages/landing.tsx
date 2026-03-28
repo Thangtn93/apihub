@@ -95,9 +95,12 @@ export function LandingPage() {
                         {discount > 0 && <p className="text-[10px] text-[#6B7280] line-through">{acc.originalPrice.toLocaleString('vi-VN')}đ</p>}
                         <p className="text-lg font-bold text-red-500 leading-none">{acc.salePrice.toLocaleString('vi-VN')}đ</p>
                       </div>
-                      <button className="px-3 py-1.5 bg-[#D4AF37] text-[#1F1F1F] text-[10px] font-black rounded-lg hover:bg-[#B08D57] transition-all whitespace-nowrap">
+                      <Link 
+                        to={`/checkout/marketplace/${acc.id}`}
+                        className="px-3 py-1.5 bg-[#D4AF37] text-[#1F1F1F] text-[10px] font-black rounded-lg hover:bg-[#B08D57] transition-all whitespace-nowrap"
+                      >
                         Mua ngay
-                      </button>
+                      </Link>
                     </div>
                   </div>
                 </Link>
@@ -127,7 +130,7 @@ export function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {models.map(model => (
-              <Link key={model.id} to={`/tokens/${model.id}`} className="bg-white rounded-xl border border-[#E5E7EB] p-5 hover:shadow-lg hover:border-[#D4AF37]/50 transition group flex flex-col">
+              <Link key={model.id} to={`/models/${model.id}`} className="bg-white rounded-xl border border-[#E5E7EB] p-5 hover:shadow-lg hover:border-[#D4AF37]/50 transition group flex flex-col">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex flex-col gap-1">
                     <span className="text-xs font-bold uppercase tracking-wider text-[#6B7280] bg-[#FAF7F0] px-2 py-1 rounded w-fit">
@@ -147,9 +150,12 @@ export function LandingPage() {
                     <span className="text-[10px] text-[#6B7280] font-medium">{model.category}</span>
                     <span className="text-sm font-bold text-[#D4AF37]">{model.price} cr</span>
                   </div>
-                  <button className="px-3 py-1.5 bg-[#D4AF37] text-[#1F1F1F] text-[10px] font-black rounded-lg hover:bg-[#B08D57] transition-all">
+                  <Link 
+                    to={`/checkout/tokens/${model.id}`}
+                    className="px-3 py-1.5 bg-[#D4AF37] text-[#1F1F1F] text-[10px] font-black rounded-lg hover:bg-[#B08D57] transition-all"
+                  >
                     Mua ngay
-                  </button>
+                  </Link>
                 </div>
               </Link>
             ))}

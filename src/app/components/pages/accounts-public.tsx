@@ -180,9 +180,12 @@ export function PublicAccountsPage() {
                         <Link to={`/marketplace/${acc.id}`} className="px-3 py-2 bg-gray-100 text-[#1F1F1F] text-[10px] font-bold rounded-lg hover:bg-gray-200 transition-all">
                           Chi tiết
                         </Link>
-                        <button className="px-4 py-2 bg-[#D4AF37] text-[#1F1F1F] text-xs font-black rounded-lg hover:bg-[#B08D57] transition-all shadow-sm">
+                        <Link 
+                          to={`/checkout/marketplace/${acc.id}`}
+                          className="px-4 py-2 bg-[#D4AF37] text-[#1F1F1F] text-xs font-black rounded-lg hover:bg-[#B08D57] transition-all shadow-sm"
+                        >
                           Mua ngay
-                        </button>
+                        </Link>
                       </div>
                     </div>
                   </div>

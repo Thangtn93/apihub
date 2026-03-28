@@ -5,7 +5,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import * as kv from "./kv_store.ts";
 
 const app = new Hono();
-const PREFIX = "/server";
+const PREFIX = "";
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -563,6 +563,108 @@ app.post(`${PREFIX}/sync-models`, adminMiddleware, async (c) => {
 // =============================================
 // PROXY ROUTES
 // =============================================
+
+// --- ORDERS (Payments & QR) ---
+app.get(`${PREFIX}/orders`, authMiddleware, async (c) => {
+  const user = c.get('user');
+  const all = await kv.getByPrefix("order:");
+  const orders = all.map((o: string) => JSON.parse(o));
+  const profile = await kv.get(`user:${user.id}`);
+  const role = profile ? JSON.parse(profile).role : "user";
+  if (role === "admin") return c.json(orders);
+  return c.json(orders.filter((o: any) => o.userId === user.id));
+});
+
+app.post(`${PREFIX}/orders`, authMiddleware, async (c) => {
+  try {
+    const user = c.get('user');
+    const { productId, productType, amount, paymentMethod } = await c.req.json();
+    const id = `ord_${crypto.randomUUID().substring(0, 8)}`;
+    const now = new Date().toISOString();
+    const order = {
+      id,
+      userId: user.id,
+      userEmail: user.email,
+      productId,
+      productType, // 'account' | 'model' | 'credits'
+      amount,
+      status: "pending",
+      paymentMethod: paymentMethod || "bank_transfer",
+      createdAt: now,
+      updatedAt: now,
+    };
+    await kv.set(`order:${id}`, JSON.stringify(order));
+    return c.json(order);
+  } catch (e: any) {
+    return c.json({ error: e.message }, 500);
+  }
+});
+
+app.get(`${PREFIX}/admin/orders`, adminMiddleware, async (c) => {
+  const all = await kv.getByPrefix("order:");
+  return c.json(all.map((o: string) => JSON.parse(o)));
+});
+
+app.post(`${PREFIX}/admin/orders/:id/approve`, adminMiddleware, async (c) => {
+  try {
+    const id = c.req.param("id");
+    const orderStr = await kv.get(`order:${id}`);
+    if (!orderStr) return c.json({ error: "Order not found" }, 404);
+    const order = JSON.parse(orderStr);
+    if (order.status !== "pending") return c.json({ error: "Order already processed" }, 400);
+
+    // 1. Mark order as completed
+    order.status = "completed";
+    order.updatedAt = new Date().toISOString();
+    await kv.set(`order:${id}`, JSON.stringify(order));
+
+    // 2. Grant product access / credits
+    if (order.productType === "model" || order.productType === "account") {
+      const purchaseId = crypto.randomUUID();
+      const purchase = {
+        id: purchaseId,
+        userId: order.userId,
+        modelId: order.productType === "model" ? order.productId : undefined,
+        accountId: order.productType === "account" ? order.productId : undefined,
+        price: order.amount,
+        createdAt: new Date().toISOString()
+      };
+      await kv.set(`purchase:${purchaseId}`, JSON.stringify(purchase));
+    } else if (order.productType === "credits") {
+      const profileStr = await kv.get(`user:${order.userId}`);
+      if (profileStr) {
+        const profile = JSON.parse(profileStr);
+        profile.credits = (profile.credits || 0) + Number(order.amount);
+        await kv.set(`user:${order.userId}`, JSON.stringify(profile));
+        
+        const topupId = crypto.randomUUID();
+        await kv.set(`topup:${topupId}`, JSON.stringify({
+          id: topupId, userId: order.userId, amount: order.amount, createdAt: new Date().toISOString()
+        }));
+      }
+    }
+
+    return c.json({ success: true, order });
+  } catch (e: any) {
+    return c.json({ error: e.message }, 500);
+  }
+});
+
+app.post(`${PREFIX}/admin/orders/:id/cancel`, adminMiddleware, async (c) => {
+  try {
+    const id = c.req.param("id");
+    const orderStr = await kv.get(`order:${id}`);
+    if (!orderStr) return c.json({ error: "Order not found" }, 404);
+    const order = JSON.parse(orderStr);
+    order.status = "cancelled";
+    order.updatedAt = new Date().toISOString();
+    await kv.set(`order:${id}`, JSON.stringify(order));
+    return c.json({ success: true, order });
+  } catch (e: any) {
+    return c.json({ error: e.message }, 500);
+  }
+});
+
 
 app.post(`${PREFIX}/v1/chat/completions`, async (c) => {
   try {

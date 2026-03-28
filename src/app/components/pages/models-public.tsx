@@ -130,7 +130,7 @@ export function PublicModelsPage() {
             : "flex flex-col gap-4"
           }>
             {filtered.map(model => (
-              <Link key={model.id} to={`/tokens/${model.id}`} 
+              <Link key={model.id} to={`/models/${model.id}`} 
                 className={`bg-white rounded-2xl border border-[#E5E7EB] p-6 hover:shadow-2xl hover:border-[#D4AF37]/40 transition-all duration-300 group ${
                   viewMode === 'list' ? 'flex items-center justify-between py-4' : 'flex flex-col'
                 }`}
@@ -168,12 +168,15 @@ export function PublicModelsPage() {
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Link to={`/tokens/${model.id}`} className="px-3 py-1.5 bg-gray-100 text-[#1F1F1F] text-[10px] font-bold rounded-lg hover:bg-gray-200 transition-all">
+                    <Link to={`/models/${model.id}`} className="px-3 py-1.5 bg-gray-100 text-[#1F1F1F] text-[10px] font-bold rounded-lg hover:bg-gray-200 transition-all">
                       Chi tiết
                     </Link>
-                    <button className="px-4 py-1.5 bg-[#D4AF37] text-[#1F1F1F] text-[10px] font-black rounded-lg hover:bg-[#B08D57] transition-all shadow-sm">
+                    <Link 
+                      to={`/checkout/tokens/${model.id}`}
+                      className="px-4 py-1.5 bg-[#D4AF37] text-[#1F1F1F] text-[10px] font-black rounded-lg hover:bg-[#B08D57] transition-all shadow-sm"
+                    >
                       Mua ngay
-                    </button>
+                    </Link>
                   </div>
                 </div>
               </Link>
