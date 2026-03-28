@@ -1,0 +1,7 @@
+services:
+  apihub:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER_LOWER}/apihub:latest
+    container_name: apihub
+    ports:
+      - "8080:80"
+    restart: always
