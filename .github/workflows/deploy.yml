@@ -66,7 +66,7 @@ jobs:
                 image: ghcr.io/${{ env.OWNER_LC }}/apihub:latest
                 container_name: apihub
                 ports:
-                  - "80:80"
+                  - "5000:80"
                 restart: always
             EOF
             
